@@ -193,32 +193,33 @@
         #about-view { background-color: #FFFFFF !important; }
         #about-view .back-btn { color: #666666 !important; }
         #about-view .back-btn:active { color: #222222 !important; }
-        
-        #about-container { 
+
+        #about-container {
             width: 85%; max-width: 500px; height: 100%; box-sizing: border-box;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding-top: 70px; padding-bottom: 20px; text-align: center;
         }
-        
+
         /* 1. Logo Udruge */
-        .about-logo-vrapcici { max-width: 150px; height: auto; margin-bottom: 25px; } 
-        
+        .about-logo-vrapcici { max-width: 150px; height: auto; margin-bottom: 25px; }
+
         /* 2. Naslov Projekta */
         .about-title { font-size: 1.4rem; color: #222222; font-weight: bold; line-height: 1.4; margin: 0; margin-bottom: 35px; letter-spacing: 1px;}
         .about-title-text { font-weight: 400; font-size: 1.2rem; font-style: italic; display: block; margin-top: 8px;}
-        
+
         /* 3. Cjelina financiranja */
         .funding-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 35px; }
         .about-text { font-size: 1rem; color: #444444; line-height: 1.4; margin-bottom: 12px; }
         .about-logo-mzom { max-width: 270px; width: 100%; height: auto; }
-        
-        /* 4. Disclaimer Gumb */
-        .disclaimer-btn {
+
+        /* 4. Disclaimer & Privacy Gumbi */
+        .about-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .disclaimer-btn, .privacy-btn {
             background: #F5F5F5; border: 1px solid #DDDDDD; border-radius: 12px; padding: 15px; width: 100%;
             font-size: 0.95rem; color: #666666; cursor: pointer; font-weight: bold;
-            transition: all 0.2s;
+            transition: all 0.2s; box-sizing: border-box;
         }
-        .disclaimer-btn:active { background: #E0E0E0; transform: scale(0.98); }
+        .disclaimer-btn:active, .privacy-btn:active { background: #E0E0E0; transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -344,7 +345,10 @@
                 <img src="img/mzom-gov-hr-color.jpg" alt="Ministarstvo znanosti, obrazovanja i mladih" class="about-logo-mzom">
             </div>
             
-            <button class="disclaimer-btn" onclick="document.getElementById('disclaimer-modal').style.display='flex'">Pravna napomena (Disclaimer)</button>
+            <div class="about-buttons">
+                <button class="disclaimer-btn" onclick="document.getElementById('disclaimer-modal').style.display='flex'">Pravna napomena (Disclaimer)</button>
+                <button class="privacy-btn" onclick="document.getElementById('privacy-modal').style.display='flex'">Politika privatnosti</button>
+            </div>
         </div>
     </div>
 
@@ -356,6 +360,24 @@
             <div class="modal-buttons">
                 <button id="btn-close-modal" onclick="document.getElementById('mood-modal').style.display = 'none'">Zatvori</button>
                 <button id="btn-delete-modal" onclick="deleteMood()">Obriši</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy-modal" class="app-modal">
+        <div class="modal-content" style="background: #FFFFFF; color: #222222; border: 1px solid #DDDDDD; max-height: 80vh; overflow-y: auto;">
+            <h3 style="margin-top:0; color:#444;">Politika privatnosti</h3>
+            <div style="text-align:left; font-size:0.9rem; line-height:1.6; color:#555;">
+                <p><strong>Zadnje ažuriranje:</strong> 5. svibnja 2026.</p>
+                <p>Aplikacija ZenUM razvijena je za Udrugu Vrapčići u sklopu projekta "Mala škola psihijatrije u zajednici za buduće zdravstvene radnike".</p>
+                <p><strong>Prikupljanje podataka:</strong> Ova aplikacija NE prikuplja, ne pohranjuje i ne šalje nikakve osobne podatke na vanjske poslužitelje. Svi podaci (unosi raspoloženja, postavke teme) pohranjuju se isključivo lokalno na vašem uređaju.</p>
+                <p><strong>Dopuštenja:</strong> Aplikacija koristi dopuštenje za vibraciju (VIBRATE) kako bi pružila haptičku povratnu informaciju tijekom vježbi opuštanja i disanja. Nije potreban pristup internetu za rad aplikacije.</p>
+                <p><strong>Podaci trećih strana:</strong> Aplikacija ne koristi analitiku, oglase niti bilo kakve usluge trećih strana koje prikupljaju podatke.</p>
+                <p><strong>Brisanje podataka:</strong> Svi lokalno pohranjeni podaci mogu se obrisati deinstalacijom aplikacije ili brisanjem podataka aplikacije u postavkama uređaja.</p>
+                <p><strong>Kontakt:</strong> Za pitanja o privatnosti obratite se na udruga.vrapcici@gmail.com</p>
+            </div>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button onclick="document.getElementById('privacy-modal').style.display='none'" style="width:100%; background:var(--accent); color:#FFF; font-weight:bold; padding: 12px; border-radius: 10px; border: none; font-size: 1rem; cursor: pointer;">U redu</button>
             </div>
         </div>
     </div>
@@ -414,6 +436,11 @@
                 history.pushState({ screen: currentScreen }, '');
                 return;
             }
+            if (document.getElementById('privacy-modal').style.display === 'flex') {
+                document.getElementById('privacy-modal').style.display = 'none';
+                history.pushState({ screen: currentScreen }, '');
+                return;
+            }
 
             if (e.state && e.state.screen === 'exit') {
                 history.pushState({ screen: 'intro-view' }, ''); 
@@ -437,7 +464,7 @@
             document.getElementById(viewId).classList.add('active');
             currentScreen = viewId;
             
-            if (viewId === 'canvas-view') setTimeout(resize, 100);
+            if (viewId === 'canvas-view') { setTimeout(resize, 100); startAnimation(); }
             if (viewId === 'intro-view') {
                 if(isZenMode) document.getElementById('btn-zen').click();
                 clearAllPointers(); 
@@ -773,9 +800,16 @@
             }
         }
 
+        let animationFrameId = null;
+        function startAnimation() {
+            if (!animationFrameId) animate();
+        }
+        function stopAnimation() {
+            if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+        }
         function animate() {
-            requestAnimationFrame(animate);
-            if(currentScreen !== 'canvas-view') return; 
+            animationFrameId = requestAnimationFrame(animate);
+            if(currentScreen !== 'canvas-view') { stopAnimation(); return; }
 
             const isLight = document.body.classList.contains('light-mode');
             ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.06)' : 'rgba(18, 18, 18, 0.035)';
@@ -843,8 +877,6 @@
                 drawShape(ctx, p, hexOpacity);
             }
         }
-        animate();
-
         canvas.addEventListener('touchstart', (e) => {
             if (document.getElementById('settings-panel').classList.contains('show') || currentScreen !== 'canvas-view') return;
             e.preventDefault(); 
