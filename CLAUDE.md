@@ -25,6 +25,9 @@ ZenUM je wellness/mindfulness Android aplikacija razvijena za **Udrugu za unaprj
 - [x] Feature graphic finalni: `C:\Users\dsaki\Desktop\BannerZaPS.png` (1024x500)
 - [x] 8 screenshotova: `C:\Users\dsaki\Desktop\Posao\Projekt ZenUM\SS pics\`
 - [x] Ikona 512x512: `android/app/src/main/ic_launcher-playstore.png`
+- [x] Release APK za testiranje: `C:\Users\dsaki\Desktop\ZenUM-v1.0.apk`
+- [x] Svi materijali kopirani u folder: `C:\Users\dsaki\Desktop\za objavu zenUMa\`
+- [x] GitHub Pages aktiviran za privacy policy (branch: main, folder: /docs)
 
 ### Google Play Console Account
 - [x] Gmail kreiran: `vrapcici.developer@gmail.com`
