@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZenUM</title>
+    <style>
+        /* --- CSS VARIJABLE ZA TEME --- */
+        :root {
+            /* TAMNA TEMA (Zadano) */
+            --bg-color: #121212;
+            --bg-glass: rgba(30, 30, 30, 0.95);
+            --text-main: #E0E0E0;
+            --text-muted: #888888;
+            --card-bg: #1E1E1E;
+            --border-color: #333333;
+            --accent: #00b4d8;
+            --btn-bg: #1E1E1E;
+            --btn-hover: #2A2A2A;
+            --modal-bg: rgba(0,0,0,0.8);
+            --canvas-fade: rgba(18, 18, 18, 0.035);
+        }
+
+        body.light-mode {
+            /* SVIJETLA TEMA */
+            --bg-color: #FFFFFF;
+            --bg-glass: rgba(255, 255, 255, 0.96);
+            --text-main: #222222;
+            --text-muted: #666666;
+            --card-bg: #F9F9F9;
+            --border-color: #DDDDDD;
+            --accent: #00b4d8;
+            --btn-bg: #F5F5F5;
+            --btn-hover: #E0E0E0;
+            --modal-bg: rgba(0,0,0,0.5);
+            --canvas-fade: rgba(255, 255, 255, 0.06);
+        }
+
+        /* --- GLOBALNI STILOVI --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: var(--bg-color);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            overflow: hidden; touch-action: none; -webkit-tap-highlight-color: transparent; 
+            color: var(--text-main);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .view-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg-color); z-index: 10;
+        }
+        .view-screen.active { display: flex; }
+
+        .back-btn {
+            position: absolute; top: 30px; left: 20px; background: none; border: none; 
+            font-size: 1.25rem; font-weight: 400; letter-spacing: 1px;
+            color: var(--text-muted); cursor: pointer; padding: 15px; z-index: 100; transition: color 0.3s, transform 0.2s;
+        }
+        .back-btn:active { color: var(--text-main); transform: scale(0.95); }
+
+        /* --- POČETNI EKRAN (MENU) --- */
+        #intro-view { z-index: 50; }
+        
+        #info-btn {
+            position: absolute; top: 30px; left: 20px; background: none; border: none;
+            font-size: 1.8rem; color: var(--text-muted); cursor: pointer; padding: 10px;
+            transition: color 0.3s, transform 0.3s; z-index: 100; font-family: serif; font-weight: bold;
+        }
+        #info-btn:active { transform: scale(0.9); color: var(--text-main); }
+
+        #theme-btn {
+            position: absolute; top: 30px; right: 20px; background: none; border: none;
+            font-size: 1.8rem; color: var(--text-muted); cursor: pointer; padding: 10px;
+            transition: color 0.3s, transform 0.3s; z-index: 100;
+        }
+        #theme-btn:active { transform: scale(0.9); color: var(--text-main); }
+
+        #app-title {
+            font-size: 3.5rem; font-weight: 300; letter-spacing: 5px; margin-bottom: 50px;
+            color: var(--text-main); animation: fadeInTitle 2.5s forwards ease-in-out;
+        }
+        #menu-container {
+            display: flex; flex-direction: column; gap: 18px; width: 85%; max-width: 320px;
+            opacity: 0; transform: translateY(20px); animation: slideUpMenu 1.5s forwards ease-out 1.5s;
+        }
+        .menu-btn {
+            background: var(--btn-bg); border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; font-size: 1.1rem; 
+            color: var(--text-main); cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            letter-spacing: 1px;
+        }
+        .menu-btn:active { background: var(--btn-hover); transform: scale(0.98); }
+
+        @keyframes fadeInTitle { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes slideUpMenu { to { opacity: 1; transform: translateY(0); } }
+
+        /* --- OPUŠTANJE (PLATNO) --- */
+        #canvas { display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        #ui-layer {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; pointer-events: none; transition: opacity 1.5s ease; user-select: none; z-index: 15;
+        }
+        #ui-layer div:first-child { font-size: 2rem; font-weight: 300; color: var(--text-main); letter-spacing: 2px; }
+        .subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 10px; letter-spacing: 1px;}
+        
+        #btn-settings { position: absolute; top: 30px; right: 20px; background: none; border: none; font-size: 28px; color: var(--text-muted); cursor: pointer; z-index: 100; padding: 10px; }
+        
+        #settings-panel {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--bg-glass); padding: 25px 20px; border-radius: 16px; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 200; text-align: center; display: none;
+            width: 85%; max-width: 380px; max-height: 85vh; overflow-y: auto; color: var(--text-main);
+        }
+        #settings-panel.show { display: block; }
+        #settings-panel h3 { margin: 15px 0 10px 0; font-weight: 400; font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;}
+        .btn-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 25px; }
+        .option-btn { background: var(--btn-bg); border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 8px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; transition: 0.2s;}
+        .option-btn.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+        #btn-zen.active { background: var(--accent); color: white; }
+        .close-btn { border: 1px solid var(--text-muted); padding: 12px 40px; border-radius: 20px; margin-top: 5px; background: transparent; color: var(--text-main); cursor: pointer;}
+        .close-btn:active { background: var(--btn-hover); }
+
+        /* --- VJEŽBE DISANJA --- */
+        #breath-container { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 60px; }
+        .breath-options { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; padding: 0 20px;}
+        .breath-btn { padding: 12px 18px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--btn-bg); color: var(--text-muted); cursor: pointer; transition: all 0.3s; }
+        .breath-btn.active { background: var(--accent); border-color: #0077b6; color: #FFFFFF; box-shadow: 0 0 15px rgba(0,180,216,0.4);}
+        
+        #breath-circle {
+            width: 180px; height: 180px; border-radius: 50%; background: linear-gradient(135deg, #0077b6, #00b4d8);
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(0, 180, 216, 0.2);
+            transform: scale(0.5); transition: transform 1s linear; margin-bottom: 40px;
+        }
+        #breath-text { font-size: 1.5rem; color: #FFFFFF; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 1px;}
+        #breath-instruction { font-size: 1rem; color: var(--text-muted); height: 30px; }
+
+        /* --- BAROMETAR RASPOLOŽENJA --- */
+        #mood-container { width: 85%; max-width: 400px; display: flex; flex-direction: column; gap: 15px; height: 85vh; padding-top: 80px;}
+        .mood-header { text-align: center; margin-bottom: 5px; font-size: 1.4rem; color: var(--text-main); font-weight: 300;}
+        .slider-container { text-align: center; background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid var(--border-color);}
+        #mood-slider { width: 100%; margin: 15px 0; accent-color: var(--accent); }
+        #mood-value { font-size: 2.5rem; font-weight: bold; color: var(--accent); }
+        #mood-note {
+            width: 100%; height: 90px; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);
+            font-family: inherit; font-size: 1rem; resize: none; box-sizing: border-box; background: var(--card-bg); color: var(--text-main);
+        }
+        #save-mood-btn {
+            background: var(--accent); color: white; padding: 18px; border: none; border-radius: 12px;
+            font-size: 1.1rem; cursor: pointer; transition: background 0.3s; font-weight: bold; letter-spacing: 1px;
+        }
+        #save-mood-btn:active { background: #0077b6; }
+        #mood-history { flex: 1; overflow-y: auto; margin-top: 10px; padding-top: 10px; }
+        .mood-entry { background: var(--card-bg); padding: 18px; border-radius: 12px; margin-bottom: 12px; border-left: 5px solid var(--accent); cursor: pointer; transition: background 0.2s; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);}
+        .mood-entry:active { background: var(--btn-hover); }
+        .mood-entry-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; color: var(--text-main);}
+        .mood-entry-note-preview { color: var(--text-muted); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Modal za detalje unosa & Disclaimer */
+        .app-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); display: none; align-items: center; justify-content: center; z-index: 300;
+        }
+        .modal-content {
+            background: var(--card-bg); width: 80%; max-width: 350px; padding: 30px; border-radius: 16px; text-align: center; border: 1px solid var(--border-color);
+        }
+        #modal-date { font-weight: bold; color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;}
+        #modal-rating { font-size: 2rem; font-weight: bold; margin-bottom: 20px; color: var(--accent);}
+        #modal-note { font-size: 1.1rem; color: var(--text-main); line-height: 1.6; margin-bottom: 30px; word-wrap: break-word; text-align: left; background: var(--bg-color); padding: 15px; border-radius: 10px;}
+        
+        .modal-buttons { display: flex; justify-content: center; gap: 10px; }
+        .modal-buttons button { padding: 12px 20px; border-radius: 10px; border: none; font-size: 1rem; cursor: pointer; font-weight: bold;}
+        #btn-close-modal { background: var(--border-color); color: var(--text-main); flex: 1;}
+        #btn-delete-modal { background: #FF3B30; color: #FFF; flex: 1;}
+
+        /* --- PORUKA DANA --- */
+        #daily-view { background: var(--bg-color); }
+        #daily-message-container {
+            width: 85%; max-width: 400px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+        }
+        .daily-card {
+            background: var(--card-bg); padding: 50px 30px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        #daily-text {
+            font-size: 1.4rem; color: var(--text-main); line-height: 1.6; font-weight: 300; margin-bottom: 30px;
+        }
+        #daily-date {
+            font-size: 0.85rem; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        /* --- O PROJEKTU (Eksplicitni Light Mode i Centriran Dizajn) --- */
+        #about-view { background-color: #FFFFFF !important; }
+        #about-view .back-btn { color: #666666 !important; }
+        #about-view .back-btn:active { color: #222222 !important; }
+        
+        #about-container { 
+            width: 85%; max-width: 500px; height: 100%; box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding-top: 70px; padding-bottom: 20px; text-align: center;
+        }
+        
+        /* 1. Logo Udruge */
+        .about-logo-vrapcici { max-width: 150px; height: auto; margin-bottom: 25px; } 
+        
+        /* 2. Naslov Projekta */
+        .about-title { font-size: 1.4rem; color: #222222; font-weight: bold; line-height: 1.4; margin: 0; margin-bottom: 35px; letter-spacing: 1px;}
+        .about-title-text { font-weight: 400; font-size: 1.2rem; font-style: italic; display: block; margin-top: 8px;}
+        
+        /* 3. Cjelina financiranja */
+        .funding-group { display: flex; flex-direction: column; align-items: center; margin-bottom: 35px; }
+        .about-text { font-size: 1rem; color: #444444; line-height: 1.4; margin-bottom: 12px; }
+        .about-logo-mzom { max-width: 270px; width: 100%; height: auto; }
+        
+        /* 4. Disclaimer Gumb */
+        .disclaimer-btn {
+            background: #F5F5F5; border: 1px solid #DDDDDD; border-radius: 12px; padding: 15px; width: 100%;
+            font-size: 0.95rem; color: #666666; cursor: pointer; font-weight: bold;
+            transition: all 0.2s;
+        }
+        .disclaimer-btn:active { background: #E0E0E0; transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div id="intro-view" class="view-screen active">
+        <button id="info-btn" onclick="switchView('about-view')" title="O projektu">ⓘ</button>
+        <button id="theme-btn" onclick="toggleTheme()" title="Promijeni temu">◐</button>
+        
+        <h1 id="app-title">ZenUM</h1>
+        <div id="menu-container">
+            <button class="menu-btn" onclick="switchView('canvas-view')">Opuštanje</button>
+            <button class="menu-btn" onclick="switchView('breath-view')">Vježbe disanja</button>
+            <button class="menu-btn" onclick="switchView('mood-view')">Barometar raspoloženja</button>
+            <button class="menu-btn" onclick="switchView('daily-view')">Poruka dana</button>
+        </div>
+    </div>
+
+    <div id="canvas-view" class="view-screen">
+        <button class="back-btn" onclick="switchView('intro-view')">← Nazad</button>
+        <div id="ui-layer">
+            <div>Udahni.</div>
+            <div class="subtitle">Dodirni zaslon za početak.</div>
+        </div>
+        <button id="btn-settings">⚙</button>
+        <div id="settings-panel">
+            <h3>Sustav</h3>
+            <div class="btn-group">
+                <button class="option-btn" id="btn-zen" onclick="toggleZenMode(this)">Zen Mod (Auto)</button>
+                <button class="option-btn active" id="btn-haptics" onclick="toggleCanvasHaptics(this)">Vibracija (Uključena)</button>
+            </div>
+            
+            <h3>Zvuk</h3>
+            <div class="btn-group">
+                <button class="option-btn active" onclick="setSound('sine', this)">Eterično</button>
+                <button class="option-btn" onclick="setSound('kristal', this)">Kristal</button>
+                <button class="option-btn" onclick="setSound('klavir', this)">Klavir</button>
+                <button class="option-btn" onclick="setSound('gudaci', this)">Gudači</button>
+                <button class="option-btn" onclick="setSound('sawtooth', this)">Vibrirajuće</button>
+                <button class="option-btn" onclick="setSound('square', this)">Svemirski</button>
+            </div>
+            
+            <h3>Vizuali</h3>
+            <div class="btn-group">
+                <button class="option-btn active" onclick="setVisual('sfera3d', this)">Sfera</button>
+                <button class="option-btn" onclick="setVisual('oblak', this)">Oblaci</button>
+                <button class="option-btn" onclick="setVisual('pravokutnik', this)">Pravokutnici</button>
+                <button class="option-btn" onclick="setVisual('trokut', this)">Trokuti</button>
+                <button class="option-btn" onclick="setVisual('kocka3d', this)">Kocka</button>
+                <button class="option-btn" onclick="setVisual('piramida3d', this)">Piramida</button>
+                <button class="option-btn" onclick="setVisual('fluid', this)">Fluid</button>
+                <button class="option-btn" onclick="setVisual('kombinirano', this)">Mix</button>
+            </div>
+            
+            <h3>Boje</h3>
+            <div class="btn-group">
+                <button class="option-btn active" onclick="setPalette('klasika', this)">Klasika</button>
+                <button class="option-btn" onclick="setPalette('more', this)">More</button>
+                <button class="option-btn" onclick="setPalette('svemir', this)">Svemir</button>
+                <button class="option-btn" onclick="setPalette('duga', this)">Duga</button>
+                <button class="option-btn" onclick="setPalette('monokrom', this)">Monokrom</button>
+                <button class="option-btn" onclick="setPalette('pastel', this)">Pastel</button>
+                <button class="option-btn" onclick="setPalette('suma', this)">Šuma</button>
+            </div>
+            <button class="close-btn" onclick="document.getElementById('settings-panel').classList.remove('show')">Zatvori</button>
+        </div>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div id="breath-view" class="view-screen">
+        <button class="back-btn" onclick="switchView('intro-view')">← Nazad</button>
+        <div id="breath-container">
+            <div class="breath-options">
+                <button class="breath-btn" id="btn-breath-haptic-toggle" onclick="toggleBreathHaptic(this)" style="width: 100%; border-color: var(--accent); color: var(--accent); margin-bottom: 15px;">Vibracija kod disanja: Uključena</button>
+                <button class="breath-btn" onclick="selectBreathing('opustanje', this)">Opuštanje (4-6)</button>
+                <button class="breath-btn" onclick="selectBreathing('balans', this)">Balans (5-5)</button>
+                <button class="breath-btn" onclick="selectBreathing('fokus', this)">Fokus (Kvadratno)</button>
+                <button class="breath-btn" onclick="selectBreathing('san', this)">Duboki san (4-7-8)</button>
+            </div>
+            <div id="breath-circle"><span id="breath-text">Spremni?</span></div>
+            <div id="breath-instruction">Odaberite vježbu za početak.</div>
+        </div>
+    </div>
+
+    <div id="mood-view" class="view-screen">
+        <button class="back-btn" onclick="switchView('intro-view')">← Nazad</button>
+        <div id="mood-container">
+            <div class="mood-header">Kako se danas osjećate?</div>
+            <div class="slider-container">
+                <div id="mood-value">5</div>
+                <input type="range" id="mood-slider" min="1" max="10" value="5" oninput="document.getElementById('mood-value').innerText = this.value">
+                <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:0.8rem; margin-top:5px;"><span>1 (Loše)</span><span>10 (Odlično)</span></div>
+            </div>
+            <textarea id="mood-note" placeholder="Zapišite neku misao ili osjećaj... (opcionalno)"></textarea>
+            <button id="save-mood-btn" onclick="saveMood()">Spremi današnji unos</button>
+            <div id="mood-history"></div>
+        </div>
+    </div>
+
+    <div id="daily-view" class="view-screen">
+        <button class="back-btn" onclick="switchView('intro-view')">← Nazad</button>
+        <div id="daily-message-container">
+            <div class="daily-card">
+                <div id="daily-text">...</div>
+                <div id="daily-date">DD.MM.YYYY. / hh:mm</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="about-view" class="view-screen">
+        <button class="back-btn" onclick="switchView('intro-view')">← Nazad</button>
+        
+        <div id="about-container">
+            
+            <img src="img/vrapcici-logo.png" alt="Udruga Vrapčići" class="about-logo-vrapcici">
+            
+            <div class="about-title">
+                PROJEKT
+                <span class="about-title-text">"Mala škola psihijatrije u zajednici za buduće zdravstvene radnike"</span>
+            </div>
+            
+            <div class="funding-group">
+                <div class="about-text">Projekt financira Ministarstvo znanosti, obrazovanja i mladih.</div>
+                <img src="img/mzom-gov-hr-color.jpg" alt="Ministarstvo znanosti, obrazovanja i mladih" class="about-logo-mzom">
+            </div>
+            
+            <button class="disclaimer-btn" onclick="document.getElementById('disclaimer-modal').style.display='flex'">Pravna napomena (Disclaimer)</button>
+        </div>
+    </div>
+
+    <div id="mood-modal" class="app-modal">
+        <div class="modal-content">
+            <div id="modal-date">Datum</div>
+            <div id="modal-rating">Ocjena: 5/10</div>
+            <div id="modal-note">Tekst bilješke...</div>
+            <div class="modal-buttons">
+                <button id="btn-close-modal" onclick="document.getElementById('mood-modal').style.display = 'none'">Zatvori</button>
+                <button id="btn-delete-modal" onclick="deleteMood()">Obriši</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="disclaimer-modal" class="app-modal">
+        <div class="modal-content" style="background: #FFFFFF; color: #222222; border: 1px solid #DDDDDD;">
+            <h3 style="margin-top:0; color:#444;">Pravna napomena</h3>
+            <p style="text-align:justify; font-size:0.95rem; line-height:1.5; color:#666;">
+                Ova aplikacija odražava isključivo stajalište njenih autora i Ministarstvo znanosti, obrazovanja i mladih se ne može smatrati odgovornom prilikom uporabe informacija koje se u njoj nalaze.
+            </p>
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button onclick="document.getElementById('disclaimer-modal').style.display='none'" style="width:100%; background:var(--accent); color:#FFF; font-weight:bold;">U redu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // SUSTAV TEMA (DARK / LIGHT MODE)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('zenum_theme') === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        });
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            localStorage.setItem('zenum_theme', body.classList.contains('light-mode') ? 'light' : 'dark');
+        }
+
+        // ==========================================
+        // PAMETNA NAVIGACIJA (ROUTER)
+        // ==========================================
+        let currentScreen = 'intro-view';
+
+        window.addEventListener('load', () => {
+            history.pushState({ screen: 'exit' }, ''); 
+            history.pushState({ screen: 'intro-view' }, ''); 
+        });
+
+        window.addEventListener('popstate', (e) => {
+            if (document.getElementById('settings-panel').classList.contains('show')) {
+                document.getElementById('settings-panel').classList.remove('show');
+                history.pushState({ screen: currentScreen }, '');
+                return;
+            }
+            if (document.getElementById('mood-modal').style.display === 'flex') {
+                document.getElementById('mood-modal').style.display = 'none';
+                history.pushState({ screen: currentScreen }, '');
+                return;
+            }
+            if (document.getElementById('disclaimer-modal').style.display === 'flex') {
+                document.getElementById('disclaimer-modal').style.display = 'none';
+                history.pushState({ screen: currentScreen }, '');
+                return;
+            }
+
+            if (e.state && e.state.screen === 'exit') {
+                history.pushState({ screen: 'intro-view' }, ''); 
+                if (confirm("Želite li napustiti aplikaciju?")) {
+                    if (navigator.app) navigator.app.exitApp(); 
+                    else window.close(); 
+                }
+            } 
+            else if (e.state && e.state.screen) {
+                switchViewLogic(e.state.screen);
+            }
+        });
+
+        function switchView(viewId) {
+            history.pushState({ screen: viewId }, '');
+            switchViewLogic(viewId);
+        }
+
+        function switchViewLogic(viewId) {
+            document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            currentScreen = viewId;
+            
+            if (viewId === 'canvas-view') setTimeout(resize, 100);
+            if (viewId === 'intro-view') {
+                if(isZenMode) document.getElementById('btn-zen').click();
+                clearAllPointers(); 
+                resetBreathingToInitial(); 
+            }
+            if (viewId === 'mood-view') loadMoods();
+            if (viewId === 'breath-view') resetBreathingToInitial(); 
+            if (viewId === 'daily-view') loadDailyMessage();
+        }
+
+        // ==========================================
+        // VIBRACIJE (HAPTIC FEEDBACK) PLATNO
+        // ==========================================
+        let isCanvasHapticsEnabled = true;
+        let lastVibrateTime = 0;
+
+        function toggleCanvasHaptics(btn) {
+            isCanvasHapticsEnabled = !isCanvasHapticsEnabled;
+            btn.innerText = isCanvasHapticsEnabled ? "Vibracija (Uključena)" : "Vibracija (Isključena)";
+            if(isCanvasHapticsEnabled) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+
+        function playDynamicHaptic(intensity, force = false) {
+            if (!isCanvasHapticsEnabled || !navigator.vibrate) return;
+            let now = Date.now();
+            if (force || now - lastVibrateTime > 100) {
+                try { navigator.vibrate(intensity); } catch(e){}
+                lastVibrateTime = now;
+            }
+        }
+
+        function getFormattedDate() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}. / ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        }
+        function getDayKey() {
+            const now = new Date();
+            return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}.`;
+        }
+
+        // ==========================================
+        // OPUŠTANJE (PLATNO, ZVUK, VIZUALI)
+        // ==========================================
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const uiLayer = document.getElementById('ui-layer');
+        const btnSettings = document.getElementById('btn-settings');
+
+        let currentSoundType = 'sine'; 
+        let currentVisualType = 'sfera3d'; 
+        let currentPaletteName = 'klasika';
+        let isZenMode = false;
+
+        const palettes = {
+            klasika: ['#A8D0E6', '#F8E9A1', '#F76C6C', '#24305E', '#374785'],
+            more: ['#03045e', '#0077b6', '#00b4d8', '#90e0ef', '#caf0f8'], 
+            svemir: ['#0b3d91', '#191970', '#4b0082', '#ffd700', '#000000'],
+            duga: ['#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', '#007AFF', '#5856D6'],
+            monokrom: ['#444444', '#666666', '#888888', '#AAAAAA', '#CCCCCC'],
+            pastel: ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF'],
+            suma: ['#2E4A25', '#4E6E40', '#859F67', '#C6D2A8', '#E6E4C1']
+        };
+        const shapeTypes = ['oblak', 'pravokutnik', 'trokut', 'sfera3d', 'kocka3d', 'piramida3d'];
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+
+        btnSettings.addEventListener('click', () => {
+            document.getElementById('settings-panel').classList.toggle('show');
+            clearAllPointers();
+        });
+
+        window.setSound = function(type, btn) { 
+            currentSoundType = type; updateBtn(btn); 
+            for(let id in activePointers) {
+                let p = activePointers[id];
+                if(p.synth) stopContinuousSynth(p.synth, 0.1);
+                p.synth = null;
+                if(type !== 'klavir') p.synth = createContinuousSynth(p.x, p.y);
+                else p.lastPianoBeat = (audioCtx ? audioCtx.currentTime : 0) - 0.75; 
+            }
+        }
+        
+        window.setVisual = function(type, btn) { currentVisualType = type; updateBtn(btn); }
+        window.setPalette = function(name, btn) { currentPaletteName = name; updateBtn(btn); }
+
+        function updateBtn(btn) {
+            Array.from(btn.parentElement.children).forEach(b => { if(b.id !== 'btn-zen' && b.id !== 'btn-haptics') b.classList.remove('active'); });
+            btn.classList.add('active');
+        }
+
+        // --- AUDIO ENGINE ---
+        let audioCtx;
+        let masterCompressor;
+        
+        const pentatonicScale = [
+            65.41, 77.78, 87.31, 98.00, 116.54, 
+            130.81, 155.56, 174.61, 196.00, 233.08, 
+            261.63, 311.13, 349.23, 392.00, 466.16, 
+            523.25, 622.25, 698.46, 783.99, 932.33, 
+            1046.50 
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterCompressor = audioCtx.createDynamicsCompressor();
+                masterCompressor.threshold.setValueAtTime(-18, audioCtx.currentTime); 
+                masterCompressor.knee.setValueAtTime(30, audioCtx.currentTime);
+                masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+                masterCompressor.attack.setValueAtTime(0.01, audioCtx.currentTime);
+                masterCompressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+                masterCompressor.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            uiLayer.style.opacity = '0';
+        }
+
+        function getFrequency(x, y) {
+            const index = Math.floor((x / window.innerWidth) * pentatonicScale.length);
+            let freq = pentatonicScale[Math.max(0, Math.min(index, pentatonicScale.length - 1))];
+            const microtune = 1 + ((y / window.innerHeight) - 0.5) * 0.03;
+            return freq * microtune;
+        }
+
+        function createContinuousSynth(x, y) {
+            if(!audioCtx) return null;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            const freq = getFrequency(x, y);
+            let osc2 = null, lfo = null; 
+
+            filter.type = 'lowpass';
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            if (currentSoundType === 'gudaci') {
+                osc.type = 'sawtooth'; osc.frequency.value = freq;
+                osc2 = audioCtx.createOscillator(); osc2.type = 'sawtooth'; osc2.frequency.value = freq * 1.005; 
+                osc2.connect(filter); osc2.start();
+
+                gainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.5); filter.frequency.value = 1500; 
+                lfo = audioCtx.createOscillator(); lfo.frequency.value = 5; 
+                let lfoGain = audioCtx.createGain(); lfoGain.gain.value = freq * 0.015; 
+                lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+                if(osc2) lfoGain.connect(osc2.frequency);
+                lfo.start();
+            }
+            else if (currentSoundType === 'kristal') {
+                osc.type = 'sine'; osc.frequency.value = freq;
+                osc2 = audioCtx.createOscillator(); osc2.type = 'triangle'; osc2.frequency.value = freq * 2.01; 
+                osc2.connect(filter); osc2.start();
+                filter.frequency.value = 3000;
+                gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.1);
+            } 
+            else {
+                osc.type = currentSoundType; osc.frequency.value = freq;
+                if(currentSoundType === 'sawtooth') filter.frequency.value = 200 + ((window.innerHeight - y) / window.innerHeight) * 800;
+                else if(currentSoundType === 'square') filter.frequency.value = 400 + ((window.innerHeight - y) / window.innerHeight) * 1500;
+                else filter.frequency.value = 500 + ((window.innerHeight - y) / window.innerHeight) * 2000;
+                gainNode.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.3);
+            }
+
+            osc.connect(filter); filter.connect(gainNode); 
+            gainNode.connect(masterCompressor); osc.start(); 
+
+            return { osc, osc2, lfo, gainNode, filter };
+        }
+
+        function updateContinuousSynth(synth, x, y) {
+            if(!synth || !audioCtx) return;
+            const freq = getFrequency(x, y);
+            synth.osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.2); 
+            if (synth.osc2) synth.osc2.frequency.setTargetAtTime(freq * (currentSoundType === 'gudaci' ? 1.005 : 2.01), audioCtx.currentTime, 0.2);
+            if (currentSoundType !== 'gudaci') synth.filter.frequency.setTargetAtTime(300 + ((window.innerHeight - y) / window.innerHeight) * 2000, audioCtx.currentTime, 0.1);
+        }
+
+        function stopContinuousSynth(synth, fadeTime) {
+            if(!synth || !audioCtx) return;
+            const now = audioCtx.currentTime;
+            synth.gainNode.gain.cancelScheduledValues(now);
+            synth.gainNode.gain.setValueAtTime(synth.gainNode.gain.value, now);
+            synth.gainNode.gain.linearRampToValueAtTime(0, now + fadeTime);
+            synth.osc.stop(now + fadeTime);
+            if(synth.osc2) synth.osc2.stop(now + fadeTime);
+            if(synth.lfo) synth.lfo.stop(now + fadeTime);
+        }
+
+        function firePianoFreq(freq, x, y) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            
+            osc.type = 'triangle'; osc.frequency.value = freq;
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2500, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.8);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.4, audioCtx.currentTime + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+            
+            osc.connect(filter); filter.connect(gain); gain.connect(masterCompressor);
+            osc.start(); osc.stop(audioCtx.currentTime + 1.5);
+            
+            spawnParticle(x, y, true); 
+            playDynamicHaptic(15, true); 
+        }
+
+        // --- UPRAVLJANJE PRSTIMA ---
+        let activePointers = {}; 
+
+        function addPointer(id, x, y, isZen = false) {
+            if(!audioCtx) initAudio();
+            let pointer = {
+                x: x, y: y, isZen: isZen,
+                vx: (Math.random() - 0.5) * 2.5, vy: (Math.random() - 0.5) * 2.5,
+                synth: null, lastPianoBeat: (audioCtx ? audioCtx.currentTime : 0) - (Math.random() * 2), arpStep: 0
+            };
+            
+            if(currentSoundType !== 'klavir') pointer.synth = createContinuousSynth(x, y);
+            activePointers[id] = pointer;
+            spawnParticle(x, y);
+            
+            if(!isZen) playDynamicHaptic(20, true); 
+        }
+
+        function movePointer(id, x, y) {
+            let p = activePointers[id];
+            if(p) {
+                p.x = x; p.y = y;
+                if(p.synth) updateContinuousSynth(p.synth, x, y);
+                if(Math.random() > 0.4) spawnParticle(x, y); 
+
+                if(!p.isZen && currentSoundType !== 'klavir') {
+                    let userFingersCount = Object.keys(activePointers).filter(pid => !activePointers[pid].isZen).length;
+                    let intensity = Math.min(30, 5 + (userFingersCount * 8)); 
+                    playDynamicHaptic(intensity); 
+                }
+            }
+        }
+
+        function removePointer(id) {
+            let p = activePointers[id];
+            if(p) {
+                if(p.synth) stopContinuousSynth(p.synth, 1.5);
+                delete activePointers[id];
+            }
+        }
+
+        function clearAllPointers() {
+            for(let id in activePointers) {
+                if(!activePointers[id].isZen) removePointer(id);
+            }
+        }
+
+        window.toggleZenMode = function(btn) {
+            isZenMode = !isZenMode;
+            initAudio(); 
+            if (isZenMode) { 
+                btn.classList.add('active'); 
+                const numFingers = Math.floor(Math.random() * 4) + 3;
+                for(let i=0; i<numFingers; i++) {
+                    addPointer('zen_'+i, Math.random()*window.innerWidth, Math.random()*window.innerHeight, true);
+                }
+            } 
+            else { 
+                btn.classList.remove('active'); 
+                for(let id in activePointers) {
+                    if(activePointers[id].isZen) removePointer(id);
+                }
+            }
+        }
+
+        // --- VIZUALI ---
+        let particles = [];
+        function getActiveShape() { return currentVisualType === 'kombinirano' ? shapeTypes[Math.floor(Math.random() * shapeTypes.length)] : currentVisualType; }
+
+        function spawnParticle(x, y, isPianoPop = false) {
+            const colors = palettes[currentPaletteName];
+            particles.push({
+                x: x, y: y, 
+                radius: isPianoPop ? 10 : (3 + Math.random()*3), 
+                life: 1.0, 
+                decay: isPianoPop ? 0.02 : 0.008, 
+                expansion: isPianoPop ? 0.3 : 0.35, 
+                color: colors[Math.floor(Math.random() * colors.length)],
+                shape: getActiveShape(), 
+                rotation: Math.random() * Math.PI * 2, 
+                rotSpeed: (Math.random() - 0.5) * 0.02 
+            });
+        }
+
+        function drawShape(ctx, p, hexOpacity) {
+            let r = Math.max(0, p.radius); 
+            if(r === 0) return;
+
+            ctx.beginPath();
+            if (p.shape === 'krug' || p.shape === 'fluid') {
+                ctx.fillStyle = p.color + hexOpacity; ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+            } 
+            else if (p.shape === 'oblak') {
+                ctx.fillStyle = p.color + hexOpacity; ctx.ellipse(p.x, p.y, r * 1.5, r * 0.8, p.rotation, 0, Math.PI * 2); ctx.fill();
+            } 
+            else if (p.shape === 'pravokutnik') { 
+                ctx.fillStyle = p.color + hexOpacity; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); ctx.rect(-r, -r, r * 2, r * 2); ctx.restore(); ctx.fill();
+            } 
+            else if (p.shape === 'trokut') { 
+                ctx.fillStyle = p.color + hexOpacity; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); ctx.moveTo(0, -r * 1.2); ctx.lineTo(r * 1.1, r); ctx.lineTo(-r * 1.1, r); ctx.closePath(); ctx.restore(); ctx.fill();
+            }
+            else if (p.shape === 'sfera3d') {
+                let grad = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
+                grad.addColorStop(0, 'rgba(255,255,255,' + p.life + ')'); grad.addColorStop(1, p.color + hexOpacity);
+                ctx.fillStyle = grad; ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+            }
+            else if (p.shape === 'kocka3d') {
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); let s = r * 0.8;
+                ctx.fillStyle = p.color + hexOpacity; ctx.fillRect(-s, -s, s*2, s*2);
+                ctx.fillStyle = p.color + hexOpacity; ctx.beginPath(); ctx.moveTo(-s, -s); ctx.lineTo(-s+s*0.8, -s-s*0.8); ctx.lineTo(s+s*0.8, -s-s*0.8); ctx.lineTo(s, -s); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,' + (p.life*0.4) + ')'; ctx.fill();
+                ctx.fillStyle = p.color + hexOpacity; ctx.beginPath(); ctx.moveTo(s, -s); ctx.lineTo(s+s*0.8, -s-s*0.8); ctx.lineTo(s+s*0.8, s-s*0.8); ctx.lineTo(s, s); ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,' + (p.life*0.3) + ')'; ctx.fill(); ctx.restore();
+            }
+            else if (p.shape === 'piramida3d') {
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation); let s = r;
+                ctx.fillStyle = p.color + hexOpacity; ctx.beginPath(); ctx.moveTo(0, -s*1.2); ctx.lineTo(-s, s); ctx.lineTo(0, s+s*0.3); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,' + (p.life*0.2) + ')'; ctx.fill();
+                ctx.fillStyle = p.color + hexOpacity; ctx.beginPath(); ctx.moveTo(0, -s*1.2); ctx.lineTo(s, s); ctx.lineTo(0, s+s*0.3); ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,' + (p.life*0.3) + ')'; ctx.fill(); ctx.restore();
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(currentScreen !== 'canvas-view') return; 
+
+            const isLight = document.body.classList.contains('light-mode');
+            ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.06)' : 'rgba(18, 18, 18, 0.035)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const now = audioCtx ? audioCtx.currentTime : 0;
+            const userPointerIds = Object.keys(activePointers).filter(id => !activePointers[id].isZen);
+            const numUserFingers = userPointerIds.length;
+
+            if (currentSoundType === 'klavir' && audioCtx) {
+                if (numUserFingers === 1) { 
+                    let p = activePointers[userPointerIds[0]];
+                    if (now - p.lastPianoBeat >= 0.25) { 
+                        let baseIndex = Math.floor((p.x / window.innerWidth) * pentatonicScale.length);
+                        baseIndex = Math.max(0, Math.min(baseIndex, pentatonicScale.length - 1));
+                        const arpOffsets = [0, 2, 4, 7, 4, 2];
+                        p.arpStep = (p.arpStep === undefined ? 0 : p.arpStep + 1) % arpOffsets.length;
+                        let playIndex = (baseIndex + arpOffsets[p.arpStep]) % pentatonicScale.length;
+                        
+                        let freq = pentatonicScale[playIndex];
+                        let microtune = 1 + ((p.y / window.innerHeight) - 0.5) * 0.03;
+                        firePianoFreq(freq * microtune, p.x, p.y);
+                        p.lastPianoBeat = now;
+                    }
+                } else if (numUserFingers > 1) { 
+                    let shouldPulse = false;
+                    userPointerIds.forEach(id => { if (now - activePointers[id].lastPianoBeat >= 0.4) shouldPulse = true; });
+                    if (shouldPulse) {
+                        userPointerIds.forEach(id => {
+                            let p = activePointers[id];
+                            firePianoFreq(getFrequency(p.x, p.y), p.x, p.y);
+                            p.lastPianoBeat = now; p.arpStep = 0;
+                        });
+                    }
+                }
+            }
+
+            for(let id in activePointers) {
+                let p = activePointers[id];
+                if(p.isZen) {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > window.innerWidth) p.vx *= -1;
+                    if (p.y < 0 || p.y > window.innerHeight) p.vy *= -1;
+                    p.vx += (Math.random() - 0.5) * 0.15; p.vy += (Math.random() - 0.5) * 0.15;
+                    p.vx = Math.max(-1.5, Math.min(1.5, p.vx)); p.vy = Math.max(-1.5, Math.min(1.5, p.vy));
+                    
+                    if (currentSoundType === 'klavir' && audioCtx) {
+                        if (now - p.lastPianoBeat >= (0.5 + Math.random() * 1.5)) { 
+                            firePianoFreq(getFrequency(p.x, p.y), p.x, p.y);
+                            p.lastPianoBeat = now;
+                        }
+                    } else if(p.synth) {
+                        updateContinuousSynth(p.synth, p.x, p.y);
+                    }
+
+                    if(Math.random() > 0.8) spawnParticle(p.x, p.y);
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.life -= p.decay; p.radius += p.expansion; p.rotation += p.rotSpeed;
+                if (p.life <= 0 || p.radius <= 0) { particles.splice(i, 1); continue; }
+                const hexOpacity = Math.floor(p.life * 255).toString(16).padStart(2, '0');
+                drawShape(ctx, p, hexOpacity);
+            }
+        }
+        animate();
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (document.getElementById('settings-panel').classList.contains('show') || currentScreen !== 'canvas-view') return;
+            e.preventDefault(); 
+            Array.from(e.changedTouches).forEach(t => addPointer(t.identifier, t.clientX, t.clientY, false));
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (document.getElementById('settings-panel').classList.contains('show') || currentScreen !== 'canvas-view') return;
+            e.preventDefault();
+            Array.from(e.changedTouches).forEach(t => movePointer(t.identifier, t.clientX, t.clientY));
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (currentScreen !== 'canvas-view') return;
+            Array.from(e.changedTouches).forEach(t => removePointer(t.identifier));
+        }, { passive: false });
+        
+        canvas.addEventListener('touchcancel', (e) => {
+            if (currentScreen !== 'canvas-view') return;
+            Array.from(e.changedTouches).forEach(t => removePointer(t.identifier));
+        }, { passive: false });
+
+        // ==========================================
+        // VJEŽBE DISANJA
+        // ==========================================
+        const breathCircle = document.getElementById('breath-circle');
+        const breathText = document.getElementById('breath-text');
+        const breathInst = document.getElementById('breath-instruction');
+        let breathTimeout;
+        let isBreathingActive = false;
+        let currentBreathPattern = '';
+        let isBreathHapticEnabled = true;
+
+        const patterns = {
+            'opustanje': [{t: "Udahni", s: 1.2, d: 4}, {t: "Izdahni", s: 0.5, d: 6}],
+            'balans': [{t: "Udahni", s: 1.2, d: 5}, {t: "Izdahni", s: 0.5, d: 5}],
+            'fokus': [{t: "Udahni", s: 1.2, d: 4}, {t: "Zadrži", s: 1.2, d: 4}, {t: "Izdahni", s: 0.5, d: 4}, {t: "Zadrži", s: 0.5, d: 4}],
+            'san': [{t: "Udahni", s: 1.2, d: 4}, {t: "Zadrži", s: 1.2, d: 7}, {t: "Izdahni", s: 0.5, d: 8}]
+        };
+
+        function toggleBreathHaptic(btn) {
+            isBreathHapticEnabled = !isBreathHapticEnabled;
+            btn.innerText = isBreathHapticEnabled ? "Vibracija kod disanja: Uključena" : "Vibracija kod disanja: Isključena";
+            if (isBreathHapticEnabled) {
+                btn.style.borderColor = "var(--accent)"; btn.style.color = "var(--accent)";
+            } else {
+                btn.style.borderColor = "var(--border-color)"; btn.style.color = "var(--text-muted)";
+            }
+        }
+
+        function resetBreathingToInitial() {
+            isBreathingActive = false;
+            clearTimeout(breathTimeout);
+            document.querySelectorAll('.breath-btn').forEach(b => {
+                if(b.id !== "btn-breath-haptic-toggle") b.classList.remove('active');
+            });
+            breathCircle.style.transition = 'none';
+            breathCircle.style.transform = 'scale(0.5)';
+            breathText.innerText = "Spremni?";
+            breathInst.innerText = "Odaberite vježbu za početak.";
+        }
+
+        window.selectBreathing = function(type, btn) {
+            resetBreathingToInitial(); 
+            btn.classList.add('active');
+            currentBreathPattern = type;
+            startBreathingLogic();
+        }
+
+        function startBreathingLogic() {
+            isBreathingActive = true;
+            breathInst.innerText = "Izbacite sav zrak iz pluća.";
+            runCountdown(3); 
+        }
+
+        function runCountdown(count) {
+            if (!isBreathingActive || currentScreen !== 'breath-view') return;
+            if (count > 0) {
+                breathText.innerText = count;
+                breathTimeout = setTimeout(() => runCountdown(count - 1), 1000);
+            } else {
+                runBreathStep(0); 
+            }
+        }
+
+        function runBreathStep(stepIndex) {
+            if (!isBreathingActive || currentScreen !== 'breath-view') return;
+            const pattern = patterns[currentBreathPattern];
+            const step = pattern[stepIndex % pattern.length];
+            
+            breathText.innerText = step.t;
+            breathInst.innerText = (step.t === "Udahni") ? "Kroz nos" : (step.t === "Izdahni" ? "Polako kroz usta" : "Ostanite mirni");
+            
+            if (isBreathHapticEnabled && navigator.vibrate) {
+                try {
+                    if (step.t === "Udahni") navigator.vibrate(40);
+                    else if (step.t === "Izdahni") navigator.vibrate([20, 50, 20]);
+                    else navigator.vibrate(15);
+                } catch(e) {}
+            }
+
+            breathCircle.style.transition = `transform ${step.d}s linear`;
+            breathCircle.style.transform = `scale(${step.s})`;
+            breathTimeout = setTimeout(() => runBreathStep(stepIndex + 1), step.d * 1000);
+        }
+
+        // ==========================================
+        // BAROMETAR RASPOLOŽENJA
+        // ==========================================
+        let currentMoodIndex = null; 
+
+        function saveMood() {
+            const todayStr = getDayKey();
+            let moods = JSON.parse(localStorage.getItem('zenum_moods') || '[]');
+            
+            const todaysEntries = moods.filter(m => m.dayKey === todayStr);
+            if (todaysEntries.length >= 3) {
+                alert("Već ste sačuvali 3 unosa za danas! Odmorite se i pokušajte ponovno sutra.");
+                return;
+            }
+
+            const rating = document.getElementById('mood-slider').value;
+            const note = document.getElementById('mood-note').value.trim();
+            const fullDate = getFormattedDate();
+            
+            moods.unshift({ date: fullDate, dayKey: todayStr, rating: rating, note: note }); 
+            localStorage.setItem('zenum_moods', JSON.stringify(moods));
+            
+            document.getElementById('mood-note').value = ''; 
+            loadMoods();
+        }
+
+        function loadMoods() {
+            const historyContainer = document.getElementById('mood-history');
+            const moods = JSON.parse(localStorage.getItem('zenum_moods') || '[]');
+            
+            if (moods.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:30px;">Još nema unosa.</div>';
+                return;
+            }
+            
+            historyContainer.innerHTML = '';
+            moods.forEach((entry, index) => {
+                let color = entry.rating >= 7 ? '#00b4d8' : (entry.rating <= 4 ? '#FF3B30' : '#FF9500');
+                let notePreview = entry.note ? entry.note : "Nema bilješke...";
+                
+                historyContainer.innerHTML += `
+                    <div class="mood-entry" style="border-left-color: ${color}" onclick="showMoodDetail(${index})">
+                        <div class="mood-entry-header">
+                            <span>${entry.date}</span>
+                            <span style="color: ${color}">Ocjena: ${entry.rating}/10</span>
+                        </div>
+                        <div class="mood-entry-note-preview">${notePreview}</div>
+                    </div>
+                `;
+            });
+        }
+
+        window.showMoodDetail = function(index) {
+            const moods = JSON.parse(localStorage.getItem('zenum_moods') || '[]');
+            const entry = moods[index];
+            if(!entry) return;
+
+            currentMoodIndex = index; 
+            let color = entry.rating >= 7 ? '#00b4d8' : (entry.rating <= 4 ? '#FF3B30' : '#FF9500');
+            
+            document.getElementById('modal-date').innerText = entry.date;
+            document.getElementById('modal-rating').innerText = "Ocjena: " + entry.rating + "/10";
+            document.getElementById('modal-rating').style.color = color;
+            document.getElementById('modal-note').innerText = entry.note ? entry.note : "Nema dodatne bilješke uz ovaj unos.";
+            
+            document.getElementById('mood-modal').style.display = 'flex';
+        }
+
+        window.deleteMood = function() {
+            if (currentMoodIndex === null) return;
+            if (confirm("Jeste li sigurni da želite obrisati ovaj unos?")) {
+                let moods = JSON.parse(localStorage.getItem('zenum_moods') || '[]');
+                moods.splice(currentMoodIndex, 1); 
+                localStorage.setItem('zenum_moods', JSON.stringify(moods)); 
+                document.getElementById('mood-modal').style.display = 'none'; 
+                loadMoods(); 
+            }
+        }
+
+        // ==========================================
+        // PORUKA DANA
+        // ==========================================
+        const messages = [
+            "Udahni mir, izdahni stres.", "Tvoje misli nisu tvoja stvarnost.", "Ovaj trenutak je sve što imaš.", "Budi prisutan ovdje i sada.",
+            "Dopusti sebi da samo budeš.", "Tvoja vrijednost ne ovisi o tvojoj produktivnosti.", "Pronađi tišinu u sebi.", "Svaki udah je novi početak.",
+            "Nisi obavezan kontrolirati sve.", "Pusti ono što ne možeš promijeniti.", "Samo diši. To je dovoljno.", "Fokusiraj se na ono što je ispred tebe.",
+            "Zahvalnost mijenja perspektivu.", "Danas biram mir.", "Tvoj um je poput neba, misli su samo oblaci.", "Uspori. Nema potrebe za žurbom.",
+            "Saslušaj svoje tijelo.", "Prihvati sebe upravo ovakvog kakav jesi.", "Dopusti emocijama da dođu i prođu.", "Sve se mijenja, i to je u redu.",
+            "Odmor nije luksuz, već potreba.", "Budi blag prema sebi danas.", "Pogledaj oko sebe i primijeti ljepotu.", "Tvoja prisutnost je tvoja snaga.",
+            "Male stvari čine veliki život.", "Nemoj vjerovati svemu što pomisliš.", "Vjeruj procesu.", "Tvoj mir je tvoj prioritet.",
+            "Ti si više od svojih strahova.", "Oluje prolaze.", "Usmjeri pažnju na svoje disanje.", "Ono što tražiš već je u tebi.",
+            "Opusti ramena i opusti čeljust.", "Svaki dan je nova prilika za svjesnost.", "Nisi zakasnio ni u čemu u svom životu.", "Voda čisti. Zrak hrani. Tiha prisutnost iscjeljuje.",
+            "Tišina je nekad najglasniji odgovor.", "Daj si vremena za rast.", "Budi strpljiv sa sobom.", "Tvoja energija prati tvoju pažnju.",
+            "Sadašnjost je jedino mjesto gdje možeš djelovati.", "Priroda ne žuri, a opet sve stigne.", "Zaslužuješ ljubav koju daješ drugima.", "Otpusti potrebu da si uvijek u pravu.",
+            "Osjeti tlo pod nogama.", "Radost se nalazi u malim trenucima.", "Ne moraš sve riješiti danas.", "Dopusti životu da te iznenadi.",
+            "Tvoja vrijednost je neupitna.", "Fokusiraj se na svoj napredak, a ne na savršenstvo.", "Budi svoj vlastiti oslonac.", "Pronađi ljepotu u jednostavnosti.",
+            "Duboko udahni. Ti to možeš.", "Nije sve hitno.", "Tvoje granice su važne.", "Slušaj da bi razumio, ne da bi odgovorio.",
+            "Ponekad je najbolje što možeš učiniti – ništa.", "Svemir ima svoj savršeni tajming.", "Danas se fokusiraj na ono što možeš kontrolirati.", "Budi izvor mira u sobi.",
+            "Svaka prepreka je prilika za rast.", "Tvoje srce zna put.", "Diši duboko i otpusti napetost.", "Neka tvoj unutarnji glas bude tvoj prijatelj.",
+            "Slavi male pobjede.", "Pusti da stvari teku svojim tokom.", "Tvoja snaga je u tvojoj ranjivosti.", "Ono što te hrani, to raste.",
+            "Pronađi radost u običnim danima.", "Zastani i samo promatraj.", "Tvoj um zaslužuje odmor.", "Otvori srce za nove mogućnosti.",
+            "Sreća je unutarnji posao.", "Nemoj se uspoređivati s drugima.", "Tvoj put je jedinstven.", "Fokusiraj se na proces, ne samo na cilj."
+        ];
+
+        function loadDailyMessage() {
+            const today = new Date();
+            const dayIndex = Math.floor(today.getTime() / (1000 * 60 * 60 * 24));
+            const messageIndex = dayIndex % messages.length;
+            const dailyMessage = messages[messageIndex];
+            
+            document.getElementById('daily-text').innerText = dailyMessage;
+            document.getElementById('daily-date').innerText = getFormattedDate();
+        }
+    </script>
+</body>
+</html>
