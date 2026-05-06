@@ -34,31 +34,32 @@ ZenUM je wellness/mindfulness Android aplikacija razvijena za **Udrugu za unaprj
 - [x] Play Console account registriran kao organizacija "Udruga Vrapcici"
 - [x] DUNS broj unesen
 - [x] Website verifikacija prošla (udrugavrapcici.hr)
-- [ ] **Identity verifikacija** - čeka se Google odobrenje (uploadana osobna iskaznica, traje 1-3 dana)
-- [ ] **Phone verifikacija** - otključava se nakon identity verifikacije
+- [x] Identity verifikacija prošla (6.5.2026.)
+- [x] Phone verifikacija prošla (6.5.2026.)
+
+### Google Play Console - Objava aplikacije (6.5.2026.)
+- [x] App kreiran u Play Console (ZenUM, Hrvatski, Free, Health & Fitness)
+- [x] Package name registriran: `com.dejansakic.zenum`
+- [x] `adi-registration.properties` dodana u assets za proof of ownership
+- [x] Store listing popunjen (tekstovi, 8 screenshotova, feature graphic, ikona 512x512)
+- [x] Privacy Policy URL postavljen: `https://bandrax.github.io/ZenUM-1.0/privacy-policy.html`
+- [x] Content rating (IARC) upitnik završen
+- [x] Target audience postavljen na 18+
+- [x] Data safety deklaracija popunjena (app ne prikuplja podatke)
+- [x] Ads declaration: no advertising ID
+- [x] Release AAB uploadan u Production track (verzija 1, v1.0, 3.34 MB)
+- [x] 177 zemalja odabrano za distribuciju (18.714 podržanih uređaja)
+- [x] **Aplikacija poslana na Google review (6.5.2026.)**
 
 ## Što još treba napraviti
 
 ### Čeka se:
-1. **Google identity verifikacija** (1-3 dana od 5.5.2026.)
-2. **Phone verifikacija** (nakon identity)
+1. **Google review odobrenje** (obično 1-7 dana za nove aplikacije, poslano 6.5.2026.)
 
-### Kad verifikacija prođe:
-1. **Kreirati app** u Play Console ("Create app")
-   - Naziv: ZenUM
-   - Jezik: Hrvatski
-   - App type: App (ne game)
-   - Free
-2. **Popuniti Store listing**
-   - Tekstovi su u `playstore/listing-tekstovi.md`
-   - Upload screenshotova (8 komada iz SS pics foldera)
-   - Upload feature graphic (`BannerZaPS.png`)
-   - Upload ikone 512x512
-   - Privacy Policy URL: `https://bandrax.github.io/ZenUM-1.0/privacy-policy.html`
-3. **Content rating** upitnik (IARC)
-4. **Target audience** - odabrati 18+
-5. **Upload AAB** u Production track
-6. **Submit za review**
+### Nakon odobrenja:
+- Aplikacija će automatski biti dostupna na Play Store
+- Provjeriti da se listing ispravno prikazuje
+- Podijeliti Play Store link s Udrugom Vrapčići
 
 ## Važni podaci
 
